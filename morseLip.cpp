@@ -10,21 +10,17 @@ bool morseSignalState = false;
 
 unsigned long markTime = 0;    // timers for mark and space in morse signal
 unsigned long spaceTime = 0;   // E=MC^2 ;p
-int morseSignals;              // nr of morse signals to send in one morse character
 boolean gotLastSig = true;     // Flag that the last received morse signal is decoded as dot or dash
 
 // translation stuff
+char morseTable[] = "5H4S?V3I?F?U??2E?L?R???A?P?W?J1 6B?D?X?N?C?K?Y?T7Z?G?Q?M8??O9?0";
 const int morseTreetop = 31;   // character position of the binary morse tree top.
 int morseTableJumper = (morseTreetop + 1) / 2;
 int morseTablePointer = morseTreetop;
-char morseTable[] = "5H4S?V3I?F?U??2E?L?R???A?P?W?J1 6B?D?X?N?C?K?Y?T7Z?G?Q?M8??O9?0";
-
-
 
 // TMP: can move and embed in code? maybe just use define
 unsigned long dotTime = 75;   // morse dot time length in ms
 unsigned long dashTime = 300;
-unsigned long wordSpace = 20000;
 
 MorseLib::MorseLib(uint8_t pinIn, uint8_t speakerPin, bool echo)
 {
@@ -47,6 +43,10 @@ void MorseLib::setup()
 
 char MorseLib::getChar()
 {
+  // empty char
+  char morseChar = '\0';
+  
+  // ## DEBOUNCE ##################################################################################
   bool morseKeyer = !digitalRead(_pinIn); // inverted for active-low input
 
   // If the switch changed, due to noise or pressing:
@@ -60,9 +60,12 @@ char MorseLib::getChar()
     // whatever the reading is at, it's been there for longer
     // than the debounce delay, so take it as the actual current state:
     morseSignalState = morseKeyer;
+    
     // differentiante mark and space times
     if (morseSignalState) markTime = lastDebounceTime; else spaceTime = lastDebounceTime;
   }
+
+  // ##############################################################################################
 
   // Morse output, or a feedback when keying.
   if (_echo) {
@@ -97,11 +100,12 @@ char MorseLib::getChar()
         morseTablePointer = morseTreetop;
       }
     }
+    
     // Write out the character if pause is longer than 2/3 dash time (2 dots) and a character received
     if ((millis() - spaceTime >= 1000) && (morseTableJumper < 16))
     {
-      char morseChar = morseTable[morseTablePointer];
-      Serial.print(morseChar);
+      morseChar = morseTable[morseTablePointer];
+      //Serial.print(morseChar);
 
       morseTableJumper = (morseTreetop + 1) / 2;
       morseTablePointer = morseTreetop;
@@ -114,5 +118,5 @@ char MorseLib::getChar()
   // save last state of the morse signal for debouncing
   lastKeyerState = morseKeyer;
 
-  return ' ';
+  return morseChar;
 }
