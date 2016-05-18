@@ -28,7 +28,6 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 cha
 Bounce db = Bounce(PIN_CLEAR, 20); 
 
 // TODO:
-//  TODO: remove cursor when timeout, put it back on awake
 //  TODO: put back full timeout (5 minutes)
 //  TODO: put back full character limit (15)
 
@@ -72,12 +71,12 @@ void setup()
   // setup clear button
   pinMode(PIN_CLEAR, INPUT_PULLUP);
 
+  // setup relay
   digitalWrite(PIN_RELAY, RELAY_OFF);
   pinMode(PIN_RELAY, OUTPUT);
     
   // setup the lcd
   lcd.init();
-  lcd.cursor();
 }
 
 void reset() {
@@ -98,6 +97,7 @@ void loop()
   if (millis() - lcdTimeOn > LCD_SLEEP) {
     reset();
     lcd.noBacklight();
+    lcd.noCursor();
   }
 
   // don't do work if we won
@@ -123,6 +123,7 @@ void loop()
     // turn on backlight in case its off
     lcdTimeOn = millis();
     lcd.backlight();
+    lcd.cursor();
 
     // print character to lcd
     lcd.print(morseChar);
