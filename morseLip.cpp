@@ -22,7 +22,7 @@ unsigned long wordSpace = 20000;
 
 MorseLib::MorseLib(uint8_t pinIn, uint8_t speakerPin, bool echo)
 {
-  _pinIn = pinIn;
+  _pinIn = pinIn; 
   _speakerPin = speakerPin;
   _echo = echo;
 }
