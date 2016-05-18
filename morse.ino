@@ -9,16 +9,18 @@
 #define PIN_RELAY   8 // Relay pin
 
 // CONST
-#define PASSWORD "EE"
-#define LCD_SLEEP 10000 // when to sleep lcd
+#define PASSWORD "POLO"
+//#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
+#define LCD_SLEEP 10000 
+//#define LCD_CHAR_LIMIT 13
+#define LCD_CHAR_LIMIT 15
 #define RELAY_ON 0
 #define RELAY_OFF 1
 
 // Global vars
 unsigned long lcdTimeOn = 0; // last time we keyed
 int cursorPos = 0;           // current cursor position
-const int cursorLimit = 3;   // limit number of characters to display
-char password[cursorLimit + 2] = "";
+char password[LCD_CHAR_LIMIT + 2] = "";
 bool enabled = true;
 bool magnetOn = true;
 
@@ -28,8 +30,8 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 cha
 Bounce db = Bounce(PIN_CLEAR, 20); 
 
 // TODO:
-//  TODO: put back full timeout (5 minutes)
-//  TODO: put back full character limit (15)
+//  get true winner sound from macbook
+
 
 void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMilliseconds)     // the sound producing function  
 {
@@ -140,9 +142,9 @@ void loop()
       cursorPos++;
   
       // limit the total displayed to lcd
-      if (cursorPos > cursorLimit) {
-          cursorPos = cursorLimit;
-          lcd.setCursor(cursorLimit, 0);
+      if (cursorPos > LCD_CHAR_LIMIT) {
+          cursorPos = LCD_CHAR_LIMIT;
+          lcd.setCursor(LCD_CHAR_LIMIT, 0);
       } 
     }
   }
