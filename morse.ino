@@ -7,14 +7,16 @@
 #define PIN_CLEAR   3 // Button to clear lcd by one
 #define PIN_SPEAKER 7 // Speaker connection
 
-// Global config
-const unsigned long lcdTimeSleep = 4000;   // when to sleep lcd
+// CONST
+#define PASSWORD "EE"
+#define LCD_SLEEP 10000 // when to sleep lcd
 
 // Global vars
 unsigned long lcdTimeOn = 0; // last time we keyed
 int cursorPos = 0;           // current cursor position
 const int cursorLimit = 3;   // limit number of characters to display
 char password[cursorLimit + 2] = "";
+bool enabled = true;
 
 // Global objects
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
@@ -24,9 +26,9 @@ Bounce db = Bounce(PIN_CLEAR, 20);
 // TODO:
 //  check for proper password 'polo'
 //    if correct
-//      buzzer happy beep
 //      set high line on relay to open magnet
-//  TODO: put back full timeout (30s)
+//  TODO: remove cursor when timeout, put it back on awake
+//  TODO: put back full timeout (5 minutes)
 //  TODO: put back full character limit (15)
 
 void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMilliseconds)     // the sound producing function  
@@ -50,6 +52,13 @@ void successSound() {
   delay(80);
 }
 
+void winner() {
+  Serial.println("");
+  Serial.println("WINNER!!");
+  successSound();
+  enabled = false;
+}
+
 void setup()
 {
   Serial.begin(9600);
@@ -66,27 +75,33 @@ void setup()
   lcd.cursor();
 }
 
-void resetPassword() {
+void reset() {
   cursorPos = 0;
   lcd.clear();
   lcd.setCursor(0, 0);
   memset(password, 0, sizeof(password));
+  enabled = true;
 }
 
 void loop()
 {
+  // handle timeout on lcd
+  if (millis() - lcdTimeOn > LCD_SLEEP) {
+    reset();
+    lcd.noBacklight();
+  }
+
+  // don't do work if we won
+  if (!enabled) {
+    return;
+  }
+  
   // debounce clear button
   db.update();
 
   // handle clear button pressed
   if (db.rose()) {
-    resetPassword();
-  }
-
-  // handle timeout on lcd
-  if (millis() - lcdTimeOn > lcdTimeSleep) {
-    resetPassword();
-    lcd.noBacklight();
+    reset();
   }
 
   // handle morse code key entered
@@ -96,9 +111,6 @@ void loop()
     // print character to console
     Serial.print(morseChar);
 
-    // update string password
-    password[cursorPos] = morseChar;
-
     // turn on backlight in case its off
     lcdTimeOn = millis();
     lcd.backlight();
@@ -106,14 +118,23 @@ void loop()
     // print character to lcd
     lcd.print(morseChar);
 
-    // update cursor position
-    cursorPos++;
+    // update string password
+    password[cursorPos] = morseChar;
 
-    // limit the total displayed to lcd
-    if (cursorPos > cursorLimit) {
-        cursorPos = cursorLimit;
-        lcd.setCursor(cursorLimit, 0);
-    } 
+    // check for win condition
+    if (String(password) == PASSWORD) {
+      winner();
+    }
+    else {
+      // update cursor position
+      cursorPos++;
+  
+      // limit the total displayed to lcd
+      if (cursorPos > cursorLimit) {
+          cursorPos = cursorLimit;
+          lcd.setCursor(cursorLimit, 0);
+      } 
+    }
   }
 }
 
