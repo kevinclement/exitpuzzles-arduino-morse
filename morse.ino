@@ -1,30 +1,25 @@
 #include <LiquidCrystal_I2C.h>
-#include <InputDebounce.h>
+#include <Bounce2.h>
 #include "MorseLib.h"
 
-const int morseInPin = 2;      // The Morse keyer button
-const int clearButtonPin = 3;
-const int morseOutPin =  7;    // For Morse code output
+// PIN setup
+#define PIN_MORSE   2 // The Morse keyer button
+#define PIN_CLEAR   3 // Button to clear lcd by one
+#define PIN_SPEAKER 7 // Speaker connection
 
-unsigned long lcdTimeOn = 0;   // last time we keyed
+// Global config
 unsigned long lcdTimeSleep = 300000;   // when to sleep lcd
 
+// Global vars
+unsigned long lcdTimeOn = 0;   // last time we keyed
 int charCount = 0;
 int charLimit = 15;
-
 boolean lcdLightOn = false;
 
+// Global objects
+MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
 LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
-static InputDebounce buttonTest; // not enabled yet, setup has to be called later
-static unsigned int buttonTest_OnTimeLast = 0;
-
-MorseLib ml(morseInPin, morseOutPin, true);
-
-void buttonTest_releasedCallback()
-{
-  // handle released state
-  Serial.println("LOW");
-}
+Bounce db = Bounce(PIN_CLEAR, 20); 
 
 void setup()
 {
@@ -35,24 +30,17 @@ void setup()
   ml.setup();
 
   // setup clear button
-  pinMode(clearButtonPin, INPUT_PULLUP);
-  buttonTest.setup(clearButtonPin);
-  buttonTest.registerCallbacks(NULL, buttonTest_releasedCallback, NULL);
- 
+  pinMode(PIN_CLEAR, INPUT_PULLUP);
+    
   // setup the lcd
   lcd.init();
-  lcd.cursor();  
+  lcd.cursor();
 }
 
 // TODO:
-//  morse to library to clean this up
-//  morse lib to use debouce lib
-//  pin to #define
 //  add back lcd light logic
 //  add back lcd limit logic
-//  clean up more library so it doesn't need all the extra space and such
 //  cleanup button press debounce
-//  move morse over to debounce library
 //  clear on button press
 //  debug any issues
 //  check for proper password 'polo'
@@ -64,6 +52,7 @@ void setup()
 //  clear is messing with cursor
 //  add reset like password when puzzle is over
 
+bool pressed = false;
 void loop()
 {
 
@@ -78,15 +67,23 @@ void loop()
   //    if (charCount > charLimit) {
   //      lcd.setCursor(charLimit, 0);
   //    }
- 
-  buttonTest.process(millis());
+   
+  // debounce clear button
+  db.update();
 
+  // handle clear button pressed
+  if (db.rose()) {
+    
+  }
+
+  // handle timeout on lcd
   if (millis() - lcdTimeOn > lcdTimeSleep) {
     lcdLightOn = false;
     lcd.clear();
     lcd.noBacklight();
   }
 
+  // handle morse code key entered
   char morseChar = ml.getChar(); 
   if (morseChar != '\0') {
     
