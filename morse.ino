@@ -8,7 +8,7 @@
 #define PIN_SPEAKER 7 // Speaker connection
 
 // Global config
-unsigned long lcdTimeSleep = 300000;   // when to sleep lcd
+const unsigned long lcdTimeSleep = 4000;   // when to sleep lcd
 
 // Global vars
 unsigned long lcdTimeOn = 0; // last time we keyed
@@ -36,8 +36,13 @@ void setup()
   lcd.cursor();
 }
 
+void clearLCD() {
+  cursorPos = 0;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+}
+
 // TODO:
-//  add back lcd light logic
 //  debug any issues
 //  check for proper password 'polo'
 //    if correct
@@ -47,30 +52,23 @@ void setup()
 //    when wake up should be reset
 //  clear is messing with cursor
 //  add reset like password when puzzle is over
+//  TODO: put back full timeout (30s)
+//  TODO: put back full character limit (15)
 
 bool pressed = false;
 void loop()
 {
-
-  // TODO: ADD BACK
-  // if (!lcdLightOn) {
-  //      lcd.backlight();
-  //      lcdLightOn = true;
-  //  }
-
   // debounce clear button
   db.update();
 
   // handle clear button pressed
   if (db.rose()) {
-    cursorPos = 0;
-    lcd.clear();
-    lcd.setCursor(0, 0);
+    clearLCD();
   }
 
   // handle timeout on lcd
   if (millis() - lcdTimeOn > lcdTimeSleep) {
-    lcd.clear();
+    clearLCD();
     lcd.noBacklight();
   }
 
@@ -80,6 +78,10 @@ void loop()
     
     // print character to console
     Serial.print(morseChar);
+
+    // turn on backlight in case its off
+    lcdTimeOn = millis();
+    lcd.backlight();
 
     // print character to lcd
     lcd.print(morseChar);
