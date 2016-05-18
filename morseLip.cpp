@@ -1,21 +1,27 @@
 #include "morseLib.h"
 
 // tmp
+
+// Debounce stuff
 bool lastKeyerState = false;
 unsigned long lastDebounceTime = 0;  // the last time the input pin was toggled
 unsigned long debounceDelay = 20;
 bool morseSignalState = false;
+
 unsigned long markTime = 0;    // timers for mark and space in morse signal
 unsigned long spaceTime = 0;   // E=MC^2 ;p
 int morseSignals;              // nr of morse signals to send in one morse character
 boolean gotLastSig = true;     // Flag that the last received morse signal is decoded as dot or dash
+
+// translation stuff
 const int morseTreetop = 31;   // character position of the binary morse tree top.
 int morseTableJumper = (morseTreetop + 1) / 2;
 int morseTablePointer = morseTreetop;
 char morseTable[] = "5H4S?V3I?F?U??2E?L?R???A?P?W?J1 6B?D?X?N?C?K?Y?T7Z?G?Q?M8??O9?0";
-bool morseSpace = false;    // Flag to prevent multiple received spaces
 
-// TMP: can move and embed in code?
+
+
+// TMP: can move and embed in code? maybe just use define
 unsigned long dotTime = 75;   // morse dot time length in ms
 unsigned long dashTime = 300;
 unsigned long wordSpace = 20000;
@@ -63,7 +69,7 @@ char MorseLib::getChar()
     digitalWrite(_speakerPin, morseSignalState);
   }
  
-  //  // Decode morse code
+  // Decode morse code
   if (!morseSignalState)
   {
     if (!gotLastSig)
@@ -92,7 +98,6 @@ char MorseLib::getChar()
       }
     }
     // Write out the character if pause is longer than 2/3 dash time (2 dots) and a character received
-    //if ((millis()-spaceTime >= (dotTime*2)) && (morseTableJumper < 16))
     if ((millis() - spaceTime >= 1000) && (morseTableJumper < 16))
     {
       char morseChar = morseTable[morseTablePointer];
@@ -101,20 +106,10 @@ char MorseLib::getChar()
       morseTableJumper = (morseTreetop + 1) / 2;
       morseTablePointer = morseTreetop;
     }
-
-    // Write a space if pause is longer than 2/3rd wordspace
-    if (millis() - spaceTime > (wordSpace * 2 / 3) && morseSpace == false)
-    {
-      Serial.print(" ");
-      morseSpace = true ; // space written-flag
-    }
-
   } else {
     // while there is a signal, reset some flags
     gotLastSig = false;
-    morseSpace = false;
   }
-
 
   // save last state of the morse signal for debouncing
   lastKeyerState = morseKeyer;
