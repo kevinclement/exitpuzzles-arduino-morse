@@ -2,7 +2,6 @@
 #include <InputDebounce.h>
 
 // the debounce time. Keep well below dotTime!!
-#define BUTTON_DEBOUNCE_DELAY   20   // [ms]
 unsigned long debounceDelay = 20;
 
 // Other Morse variables
@@ -54,6 +53,12 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 cha
 static InputDebounce buttonTest; // not enabled yet, setup has to be called later
 static unsigned int buttonTest_OnTimeLast = 0;
 
+void buttonTest_releasedCallback()
+{
+  // handle released state
+  Serial.println("LOW");
+}
+
 void setup()
 {
   pinMode(morseInPin, INPUT);
@@ -69,7 +74,8 @@ void setup()
   lcd.init();
   lcd.cursor();
 
-  buttonTest.setup(clearButtonPin, DEFAULT_INPUT_DEBOUNCE_DELAY);
+  buttonTest.setup(clearButtonPin);
+  buttonTest.registerCallbacks(NULL, buttonTest_releasedCallback, NULL);
 }
 
 // TODO:
@@ -86,6 +92,7 @@ void setup()
 //  after 5 minutes clear screen
 //    when wake up should be reset
 //  clear is messing with cursor
+//  add reset like password when puzzle is over
 
 void loop()
 {
@@ -93,17 +100,18 @@ void loop()
   // char morseChar = morse.getChar();
   // if (morseChar != '')
   // {
-  //
-
-  unsigned int buttonTest_OnTime = buttonTest.process(millis());
-  if (buttonTest_OnTime) {
-    buttonTest_OnTimeLast = buttonTest_OnTime;
-  }
-  else if (buttonTest_OnTimeLast) {
-    Serial.print("YES!!!");
-    Serial.println(millis());
-    buttonTest_OnTimeLast = 0;
-  }
+  //   // handle morse character
+  // }
+buttonTest.process(millis());
+//  unsigned int buttonTest_OnTime = buttonTest.process(millis());
+//  if (buttonTest_OnTime) {
+//    buttonTest_OnTimeLast = buttonTest_OnTime;
+//  }
+//  else if (buttonTest_OnTimeLast) {
+//    Serial.print("YES!!!");
+//    Serial.println(millis());
+//    buttonTest_OnTimeLast = 0;
+//  }
 
   if (millis() - lcdTimeOn > lcdTimeSleep) {
     lcdLightOn = false;
