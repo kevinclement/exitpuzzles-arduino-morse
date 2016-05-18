@@ -20,6 +20,35 @@ MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
 LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
 Bounce db = Bounce(PIN_CLEAR, 20); 
 
+// TODO:
+//  check for proper password 'polo'
+//    if correct
+//      buzzer happy beep
+//      set high line on relay to open magnet
+//  TODO: put back full timeout (30s)
+//  TODO: put back full character limit (15)
+
+void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMilliseconds)     // the sound producing function  
+{
+  int x;   
+  long delayAmount = (long)(1000000/frequencyInHertz); 
+  long loopTime = (long)((timeInMilliseconds*1000)/(delayAmount*2)); 
+  for (x=0;x<loopTime;x++)   
+  {   
+      digitalWrite(speakerPin,HIGH); 
+      delayMicroseconds(delayAmount); 
+      digitalWrite(speakerPin,LOW); 
+      delayMicroseconds(delayAmount); 
+  }
+}
+
+void successSound() {
+  beep(PIN_SPEAKER,1200,100);
+  delay(80);
+  beep(PIN_SPEAKER,1500,100);
+  delay(80);
+}
+
 void setup()
 {
   Serial.begin(9600);
@@ -34,28 +63,16 @@ void setup()
   // setup the lcd
   lcd.init();
   lcd.cursor();
+
+  successSound();
 }
 
-void clearLCD() {
+void resetPassword() {
   cursorPos = 0;
   lcd.clear();
   lcd.setCursor(0, 0);
 }
 
-// TODO:
-//  debug any issues
-//  check for proper password 'polo'
-//    if correct
-//      buzzer happy beep
-//      set high line on relay to open magnet
-//  after 5 minutes clear screen
-//    when wake up should be reset
-//  clear is messing with cursor
-//  add reset like password when puzzle is over
-//  TODO: put back full timeout (30s)
-//  TODO: put back full character limit (15)
-
-bool pressed = false;
 void loop()
 {
   // debounce clear button
@@ -63,12 +80,12 @@ void loop()
 
   // handle clear button pressed
   if (db.rose()) {
-    clearLCD();
+    resetPassword();
   }
 
   // handle timeout on lcd
   if (millis() - lcdTimeOn > lcdTimeSleep) {
-    clearLCD();
+    resetPassword();
     lcd.noBacklight();
   }
 
