@@ -6,10 +6,13 @@
 #define PIN_MORSE   2 // The Morse keyer button
 #define PIN_CLEAR   3 // Button to clear lcd by one
 #define PIN_SPEAKER 7 // Speaker connection
+#define PIN_RELAY   8 // Relay pin
 
 // CONST
 #define PASSWORD "EE"
 #define LCD_SLEEP 10000 // when to sleep lcd
+#define RELAY_ON 0
+#define RELAY_OFF 1
 
 // Global vars
 unsigned long lcdTimeOn = 0; // last time we keyed
@@ -17,6 +20,7 @@ int cursorPos = 0;           // current cursor position
 const int cursorLimit = 3;   // limit number of characters to display
 char password[cursorLimit + 2] = "";
 bool enabled = true;
+bool magnetOn = true;
 
 // Global objects
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
@@ -24,9 +28,6 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 cha
 Bounce db = Bounce(PIN_CLEAR, 20); 
 
 // TODO:
-//  check for proper password 'polo'
-//    if correct
-//      set high line on relay to open magnet
 //  TODO: remove cursor when timeout, put it back on awake
 //  TODO: put back full timeout (5 minutes)
 //  TODO: put back full character limit (15)
@@ -57,6 +58,7 @@ void winner() {
   Serial.println("WINNER!!");
   successSound();
   enabled = false;
+  magnetOn = false;
 }
 
 void setup()
@@ -69,6 +71,9 @@ void setup()
 
   // setup clear button
   pinMode(PIN_CLEAR, INPUT_PULLUP);
+
+  digitalWrite(PIN_RELAY, RELAY_OFF);
+  pinMode(PIN_RELAY, OUTPUT);
     
   // setup the lcd
   lcd.init();
@@ -81,10 +86,14 @@ void reset() {
   lcd.setCursor(0, 0);
   memset(password, 0, sizeof(password));
   enabled = true;
+  magnetOn = true;
 }
 
 void loop()
 {
+  // write out to the relay
+  digitalWrite(PIN_RELAY, magnetOn ? RELAY_ON : RELAY_OFF);
+  
   // handle timeout on lcd
   if (millis() - lcdTimeOn > LCD_SLEEP) {
     reset();
