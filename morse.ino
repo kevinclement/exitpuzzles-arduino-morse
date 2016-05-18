@@ -14,6 +14,7 @@ const unsigned long lcdTimeSleep = 4000;   // when to sleep lcd
 unsigned long lcdTimeOn = 0; // last time we keyed
 int cursorPos = 0;           // current cursor position
 const int cursorLimit = 3;   // limit number of characters to display
+char password[cursorLimit + 2] = "";
 
 // Global objects
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
@@ -63,14 +64,13 @@ void setup()
   // setup the lcd
   lcd.init();
   lcd.cursor();
-
-  successSound();
 }
 
 void resetPassword() {
   cursorPos = 0;
   lcd.clear();
   lcd.setCursor(0, 0);
+  memset(password, 0, sizeof(password));
 }
 
 void loop()
@@ -96,14 +96,15 @@ void loop()
     // print character to console
     Serial.print(morseChar);
 
+    // update string password
+    password[cursorPos] = morseChar;
+
     // turn on backlight in case its off
     lcdTimeOn = millis();
     lcd.backlight();
 
     // print character to lcd
     lcd.print(morseChar);
-
-    // TODO: update string representation
 
     // update cursor position
     cursorPos++;
