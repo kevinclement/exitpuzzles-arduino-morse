@@ -5,11 +5,6 @@
 #define DASH_TIME 120
 #define WAIT_THRESHOLD 1000
 
-// tmp
-unsigned long markTime = 0;
-unsigned long waitTime = 0;
-bool pressed = false;
-
 // Debounce stuff
 Bounce debouncer = Bounce(); 
 
@@ -59,19 +54,19 @@ char MorseLib::getChar()
   if (btnPressed) {
 
     // first time changed state, mark time this happened
-    if (!pressed) {
-      markTime = millis();
+    if (!_pressed) {
+      _markTime = millis();
     }
     
-    pressed = true;    
+    _pressed = true;    
   } 
   else {
 
     // if we haven't decoded last press, then do that
-    if (pressed) {
+    if (_pressed) {
       
       // determine if it was a dot or a dash
-      if (millis() - markTime > DASH_TIME) {
+      if (millis() - _markTime > DASH_TIME) {
         morseTablePointer += morseTableJumper;
       } 
       else {
@@ -80,20 +75,20 @@ char MorseLib::getChar()
       morseTableJumper /= 2;
 
       // track how long we've been waiting for a press
-      waitTime = millis();
+      _waitTime = millis();
     } else {
       
       // otherwise we're waiting, if this is first time, write down its time
-      if (waitTime > 0 && millis() - waitTime > WAIT_THRESHOLD) {
+      if (_waitTime > 0 && millis() - _waitTime > WAIT_THRESHOLD) {
         morseChar = morseTable[morseTablePointer];
         morseTableJumper = (morseTreetop + 1) / 2;
         morseTablePointer = morseTreetop;
 
-        waitTime = 0;
+        _waitTime = 0;
       }
     }    
 
-    pressed = false;
+    _pressed = false;
   }
 
   return morseChar;
