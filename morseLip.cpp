@@ -1,5 +1,8 @@
 #include "morseLib.h"
 
+#define DOT_TIME 75
+#define DASH_TIME 300
+
 // tmp
 
 // Debounce stuff
@@ -17,10 +20,6 @@ char morseTable[] = "5H4S?V3I?F?U??2E?L?R???A?P?W?J1 6B?D?X?N?C?K?Y?T7Z?G?Q?M8??
 const int morseTreetop = 31;   // character position of the binary morse tree top.
 int morseTableJumper = (morseTreetop + 1) / 2;
 int morseTablePointer = morseTreetop;
-
-// TMP: can move and embed in code? maybe just use define
-unsigned long dotTime = 75;   // morse dot time length in ms
-unsigned long dashTime = 300;
 
 MorseLib::MorseLib(uint8_t pinIn, uint8_t speakerPin, bool echo)
 {
@@ -80,14 +79,14 @@ char MorseLib::getChar()
       if (morseTableJumper > 0)
       {
         // if pause for more than half a dot, get what kind of signal pulse (dot/dash) received last
-        if (millis() - spaceTime > dotTime / 2)
+        if (millis() - spaceTime > DOT_TIME / 2)
         {
           // if signal for more than 1/4 dotTime, take it as a valid morse pulse
-          if (spaceTime - markTime > dotTime / 4)
+          if (spaceTime - markTime > DOT_TIME / 4)
           {
             // if signal for less than half a dash, take it as a dot, else if not, take it as a dash
             // (dashes can be really really long...)
-            if (spaceTime - markTime < dashTime / 2) morseTablePointer -= morseTableJumper;
+            if (spaceTime - markTime < DASH_TIME / 2) morseTablePointer -= morseTableJumper;
             else morseTablePointer += morseTableJumper;
             morseTableJumper /= 2;
             gotLastSig = true;
