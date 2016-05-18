@@ -11,10 +11,9 @@
 unsigned long lcdTimeSleep = 300000;   // when to sleep lcd
 
 // Global vars
-unsigned long lcdTimeOn = 0;   // last time we keyed
-int charCount = 0;
-int charLimit = 15;
-boolean lcdLightOn = false;
+unsigned long lcdTimeOn = 0; // last time we keyed
+int cursorPos = 0;           // current cursor position
+const int cursorLimit = 3;   // limit number of characters to display
 
 // Global objects
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
@@ -39,9 +38,6 @@ void setup()
 
 // TODO:
 //  add back lcd light logic
-//  add back lcd limit logic
-//  cleanup button press debounce
-//  clear on button press
 //  debug any issues
 //  check for proper password 'polo'
 //    if correct
@@ -62,23 +58,18 @@ void loop()
   //      lcdLightOn = true;
   //  }
 
-  // TODO: ADD BACK
-  //charCount++;
-  //    if (charCount > charLimit) {
-  //      lcd.setCursor(charLimit, 0);
-  //    }
-   
   // debounce clear button
   db.update();
 
   // handle clear button pressed
   if (db.rose()) {
-    
+    cursorPos = 0;
+    lcd.clear();
+    lcd.setCursor(0, 0);
   }
 
   // handle timeout on lcd
   if (millis() - lcdTimeOn > lcdTimeSleep) {
-    lcdLightOn = false;
     lcd.clear();
     lcd.noBacklight();
   }
@@ -87,10 +78,22 @@ void loop()
   char morseChar = ml.getChar(); 
   if (morseChar != '\0') {
     
-    // Echo to console
+    // print character to console
     Serial.print(morseChar);
 
-    // TODO: handle morse character
+    // print character to lcd
+    lcd.print(morseChar);
+
+    // TODO: update string representation
+
+    // update cursor position
+    cursorPos++;
+
+    // limit the total displayed to lcd
+    if (cursorPos > cursorLimit) {
+        cursorPos = cursorLimit;
+        lcd.setCursor(cursorLimit, 0);
+    } 
   }
 }
 
