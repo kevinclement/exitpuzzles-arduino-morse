@@ -10,7 +10,6 @@ unsigned long lcdTimeSleep = 300000;   // when to sleep lcd
 int charCount = 0;
 int charLimit = 15;
 
-
 boolean lastClearButton = false;
 boolean clearButtonState = false;
 boolean lcdLightOn = false;
@@ -20,35 +19,8 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 cha
 static InputDebounce buttonTest; // not enabled yet, setup has to be called later
 static unsigned int buttonTest_OnTimeLast = 0;
 
-MorseLib ml(morseInPin, morseOutPin);
+MorseLib ml(morseInPin, morseOutPin, true);
 
-// TMP: Moved
-//boolean lastKeyerState = false;
-//unsigned long lastDebounceTime = 0;  // the last time the input pin was toggled
-//unsigned long debounceDelay = 20;
-//boolean morseSignalState = false;
-//unsigned long markTime = 0;    // timers for mark and space in morse signal
-//unsigned long spaceTime = 0;   // E=MC^2 ;p
-//boolean morseEcho = true; // Echoes character to encode back to serial and Morse signal input to output pin
-//boolean sendingMorse = false;
-//char morseSignal[] = "......"; // temporary string to hold one morse character's signals to send
-//int morseSignalPos = 0;
-//int sendingMorseSignalNr = 0;
-//unsigned long sendMorseTimer = 0;
-//unsigned long dotTime = 75;   // morse dot time length in ms
-//unsigned long dashTime = 300;
-//unsigned long wordSpace = 20000;
-//int morseSignals;              // nr of morse signals to send in one morse character
-//boolean gotLastSig = true;     // Flag that the last received morse signal is decoded as dot or dash
-//const int morseTreetop = 31;   // character position of the binary morse tree top.
-//int morseTableJumper = (morseTreetop + 1) / 2;
-//int morseTablePointer = morseTreetop;
-//const int morseTableLength = (morseTreetop * 2) + 1;
-//const int morseTreeLevels = log(morseTreetop + 1) / log(2);
-// Morse code binary tree table (or, dichotomic search table)
-//char morseTable[] = "5H4S?V3I?F?U??2E?L?R???A?P?W?J1 6B?D?X?N?C?K?Y?T7Z?G?Q?M8??O9?0";
-//char morseTable[] = "?H?S?B?I?L?D?Z?E?F?R?C?N?P?G?J? ?V?U?X?A?C?K?Q?T?Z?W?Y?M*J?O*??";
-//boolean morseSpace = false;    // Flag to prevent multiple received spaces
 void buttonTest_releasedCallback()
 {
   // handle released state
@@ -75,6 +47,8 @@ void setup()
 
 // TODO:
 //  morse to library to clean this up
+//  morse lib to use debouce lib
+//  pin to #define
 //  add back lcd light logic
 //  add back lcd limit logic
 //  clean up more library so it doesn't need all the extra space and such

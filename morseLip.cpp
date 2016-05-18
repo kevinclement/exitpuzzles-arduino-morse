@@ -7,11 +7,6 @@ unsigned long debounceDelay = 20;
 bool morseSignalState = false;
 unsigned long markTime = 0;    // timers for mark and space in morse signal
 unsigned long spaceTime = 0;   // E=MC^2 ;p
-bool morseEcho = true; // Echoes character to encode back to serial and Morse signal input to output pin
-bool sendingMorse = false;
-char morseSignal[] = "......"; // temporary string to hold one morse character's signals to send
-int sendingMorseSignalNr = 0;
-unsigned long sendMorseTimer = 0;
 int morseSignals;              // nr of morse signals to send in one morse character
 boolean gotLastSig = true;     // Flag that the last received morse signal is decoded as dot or dash
 const int morseTreetop = 31;   // character position of the binary morse tree top.
@@ -25,10 +20,11 @@ unsigned long dotTime = 75;   // morse dot time length in ms
 unsigned long dashTime = 300;
 unsigned long wordSpace = 20000;
 
-MorseLib::MorseLib(uint8_t pinIn, uint8_t speakerPin)
+MorseLib::MorseLib(uint8_t pinIn, uint8_t speakerPin, bool echo)
 {
   _pinIn = pinIn;
   _speakerPin = speakerPin;
+  _echo = echo;
 }
 
 void MorseLib::setup()
@@ -63,57 +59,10 @@ char MorseLib::getChar()
   }
 
   // Morse output, or a feedback when keying.
-  if (!sendingMorse && morseEcho) {
+  if (_echo) {
     digitalWrite(_speakerPin, morseSignalState);
   }
-
-  // Send Morse signals to output
-  if (sendingMorse)
-  {
-    switch (morseSignal[sendingMorseSignalNr])
-    {
-      case '.': // Send a dot (actually, stop sending a signal after a "dot time")
-        if (millis() - sendMorseTimer >= dotTime)
-        {
-          digitalWrite(_speakerPin, LOW);
-          sendMorseTimer = millis();
-          morseSignal[sendingMorseSignalNr] = 'x'; // Mark the signal as sent
-        }
-        break;
-      case '-': // Send a dash (same here, stop sending after a dash worth of time)
-        if (millis() - sendMorseTimer >= dashTime)
-        {
-          digitalWrite(_speakerPin, LOW);
-          sendMorseTimer = millis();
-          morseSignal[sendingMorseSignalNr] = 'x'; // Mark the signal as sent
-        }
-        break;
-      case 'x': // To make sure there is a pause between signals and letters
-        if (sendingMorseSignalNr < morseSignals - 1)
-        {
-          // Pause between signals in the same letter
-          if (millis() - sendMorseTimer >= dotTime)
-          {
-            sendingMorseSignalNr++;
-            digitalWrite(_speakerPin, HIGH); // Start sending the next signal
-            sendMorseTimer = millis();       // reset the timer
-          }
-        } else {
-          // Pause between letters
-          if (millis() - sendMorseTimer >= dashTime)
-          {
-            sendingMorseSignalNr++;
-            sendMorseTimer = millis();       // reset the timer
-          }
-        }
-        break;
-      case ' ': // Pause between words (minus pause between letters - already sent)
-      default:  // Just in case its something else
-        if (millis() - sendMorseTimer > wordSpace - dashTime) sendingMorse = false;
-    }
-    if (sendingMorseSignalNr >= morseSignals) sendingMorse = false; // Ready to encode more letters
-  }
-
+ 
   //  // Decode morse code
   if (!morseSignalState)
   {
