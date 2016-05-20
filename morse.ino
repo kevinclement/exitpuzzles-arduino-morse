@@ -15,6 +15,8 @@
 #define LCD_CHAR_LIMIT 10
 #define RESET_TIME 20000 // how long to hold button before a reset
 #define DISPLAY "CODE:"
+#define FEEDBACK_LINE 0 // what line is feedback on
+#define DISPLAY_LINE 1  // what line is display on
 #define RELAY_ON 0
 #define RELAY_OFF 1
 
@@ -78,21 +80,21 @@ void setup()
     
   // setup the lcd
   lcd.init();
-  lcd.setCursor(0, 1);
+  lcd.setCursor(0, DISPLAY_LINE);
   lcd.print(DISPLAY); 
 }
 
 void clearFeedback() {
   dotDashCount = 0;
-  lcd.setCursor(0, 0);
+  lcd.setCursor(0, FEEDBACK_LINE);
   lcd.print("                ");
 }
 
 void clearPassword() {
   cursorPos = 0;
-  lcd.setCursor(0, 1);
+  lcd.setCursor(0, DISPLAY_LINE);
   lcd.print("                ");
-  lcd.setCursor(0, 1);
+  lcd.setCursor(0, DISPLAY_LINE);
   lcd.print(DISPLAY);
   memset(password, 0, sizeof(password));
 }
@@ -151,13 +153,13 @@ void loop()
 
   if (morseChar == '.' || morseChar == '-') {
     // print to lcd dots and dashes to help users determine what they were doing
-    lcd.setCursor(dotDashCount,0);
+    lcd.setCursor(dotDashCount, FEEDBACK_LINE);
     lcd.print(morseChar);
     dotDashCount++;
-    lcd.setCursor(strlen(DISPLAY) + cursorPos, 1);    
+    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);    
   } else if (morseChar != '\0') {
     clearFeedback();
-    lcd.setCursor(strlen(DISPLAY) + cursorPos, 1);
+    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);
     
     // print character to console
     Serial.print(morseChar);
@@ -184,7 +186,7 @@ void loop()
       // limit the total displayed to lcd
       if (cursorPos > LCD_CHAR_LIMIT) {
           cursorPos = LCD_CHAR_LIMIT;
-          lcd.setCursor(strlen(DISPLAY) + LCD_CHAR_LIMIT, 1);
+          lcd.setCursor(strlen(DISPLAY) + LCD_CHAR_LIMIT, DISPLAY_LINE);
       } 
     }
   }
