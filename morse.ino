@@ -15,8 +15,8 @@
 #define LCD_CHAR_LIMIT 10
 #define RESET_TIME 20000 // how long to hold button before a reset
 #define DISPLAY "CODE:"
-#define FEEDBACK_LINE 0 // what line is feedback on
-#define DISPLAY_LINE 1  // what line is display on
+#define FEEDBACK_LINE 1 // what line is feedback on
+#define DISPLAY_LINE 0  // what line is display on
 #define RELAY_ON 0
 #define RELAY_OFF 1
 
