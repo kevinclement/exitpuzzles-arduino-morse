@@ -25,6 +25,7 @@ int cursorPos = 0;           // current cursor position
 char password[LCD_CHAR_LIMIT + 2] = "";
 bool enabled = true;
 bool magnetOn = true;
+int dotDashCount = 0;
 
 // Global objects
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
@@ -81,6 +82,12 @@ void setup()
   lcd.print(DISPLAY); 
 }
 
+void clearFeedback() {
+  dotDashCount = 0;
+  lcd.setCursor(0, 0);
+  lcd.print("                ");
+}
+
 void clearPassword() {
   cursorPos = 0;
   lcd.setCursor(0, 1);
@@ -91,12 +98,14 @@ void clearPassword() {
 }
 
 void reset() {
+  clearFeedback();
   clearPassword();
   enabled = true;
   magnetOn = true;
 }
 
 void timeout() {
+  clearFeedback();
   clearPassword();
   lcd.noBacklight();
   lcd.noCursor();
@@ -139,7 +148,16 @@ void loop()
 
   // handle morse code key entered
   char morseChar = ml.getChar(); 
-  if (morseChar != '\0') {
+
+  if (morseChar == '.' || morseChar == '-') {
+    // print to lcd dots and dashes to help users determine what they were doing
+    lcd.setCursor(dotDashCount,0);
+    lcd.print(morseChar);
+    dotDashCount++;
+    lcd.setCursor(strlen(DISPLAY) + cursorPos, 1);    
+  } else if (morseChar != '\0') {
+    clearFeedback();
+    lcd.setCursor(strlen(DISPLAY) + cursorPos, 1);
     
     // print character to console
     Serial.print(morseChar);

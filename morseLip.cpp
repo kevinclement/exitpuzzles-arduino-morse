@@ -68,9 +68,11 @@ char MorseLib::getChar()
       // determine if it was a dot or a dash
       if (millis() - _markTime > DASH_TIME) {
         morseTablePointer += morseTableJumper;
+        morseChar = '-';
       } 
       else {
         morseTablePointer -= morseTableJumper;
+        morseChar = '.';
       }
       morseTableJumper /= 2;
 
