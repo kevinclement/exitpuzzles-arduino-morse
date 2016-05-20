@@ -9,9 +9,9 @@
 #define PIN_RELAY   8 // Relay pin
 
 // CONST
-#define PASSWORD "EE"
-//#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
-#define LCD_SLEEP 10000 
+#define PASSWORD "POLO"
+#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
+//#define LCD_SLEEP 10000 
 #define LCD_CHAR_LIMIT 10
 #define RESET_TIME 20000 // how long to hold button before a reset
 #define DISPLAY "CODE:"
