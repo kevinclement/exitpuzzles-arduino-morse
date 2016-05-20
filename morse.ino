@@ -10,8 +10,8 @@
 
 // CONST
 #define PASSWORD "POLO"
-//#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
-#define LCD_SLEEP 10000 
+#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
+//#define LCD_SLEEP 10000 
 //#define LCD_CHAR_LIMIT 13
 #define LCD_CHAR_LIMIT 15
 #define RELAY_ON 0
@@ -28,10 +28,6 @@ bool magnetOn = true;
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
 LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
 Bounce db = Bounce(PIN_CLEAR, 20); 
-
-// TODO:
-//  get true winner sound from macbook
-
 
 void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMilliseconds)     // the sound producing function  
 {
@@ -50,8 +46,8 @@ void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMillisecond
 void successSound() {
   beep(PIN_SPEAKER,1200,100);
   delay(80);
-  beep(PIN_SPEAKER,1500,100);
-  delay(80);
+  beep(PIN_SPEAKER,1200,100);
+  beep(PIN_SPEAKER,1500,200);
 }
 
 void winner() {
