@@ -9,10 +9,9 @@
 #define PIN_RELAY   8 // Relay pin
 
 // CONST
-#define PASSWORD "POLO"
-#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
-//#define LCD_SLEEP 10000 
-//#define LCD_CHAR_LIMIT 13
+#define PASSWORD "EE"
+//#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
+#define LCD_SLEEP 10000 
 #define LCD_CHAR_LIMIT 15
 #define RELAY_ON 0
 #define RELAY_OFF 1
@@ -77,13 +76,23 @@ void setup()
   lcd.init();
 }
 
-void reset() {
+void clearPassword() {
   cursorPos = 0;
   lcd.clear();
   lcd.setCursor(0, 0);
   memset(password, 0, sizeof(password));
+}
+
+void reset() {
+  clearPassword();
   enabled = true;
   magnetOn = true;
+}
+
+void timeout() {
+  clearPassword();
+  lcd.noBacklight();
+  lcd.noCursor();
 }
 
 void loop()
@@ -93,9 +102,7 @@ void loop()
   
   // handle timeout on lcd
   if (millis() - lcdTimeOn > LCD_SLEEP) {
-    reset();
-    lcd.noBacklight();
-    lcd.noCursor();
+    timeout();
   }
 
   // don't do work if we won
@@ -108,7 +115,7 @@ void loop()
 
   // handle clear button pressed
   if (db.rose()) {
-    reset();
+    clearPassword();
   }
 
   // handle morse code key entered
