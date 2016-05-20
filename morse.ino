@@ -13,11 +13,13 @@
 //#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
 #define LCD_SLEEP 10000 
 #define LCD_CHAR_LIMIT 15
+#define RESET_TIME 20000 // how long to hold button before a reset
 #define RELAY_ON 0
 #define RELAY_OFF 1
 
 // Global vars
 unsigned long lcdTimeOn = 0; // last time we keyed
+unsigned long buttonHeld = 0;
 int cursorPos = 0;           // current cursor position
 char password[LCD_CHAR_LIMIT + 2] = "";
 bool enabled = true;
@@ -105,16 +107,28 @@ void loop()
     timeout();
   }
 
-  // don't do work if we won
-  if (!enabled) {
-    return;
-  }
-  
   // debounce clear button
   db.update();
 
+  // record clear button down
+  if (db.fell()) {
+    buttonHeld = millis();
+  }
+
+  // if we've been holding the button down long enough, reset the whole thing
+  if (db.read() == 0 && buttonHeld > 0 && millis() - buttonHeld > RESET_TIME) {
+    Serial.println("Resetting machine.");
+    buttonHeld = 0;
+    reset();
+  }
+  // don't do work if we won and not a reset button
+  if (!enabled) {
+    return;
+  }
+
   // handle clear button pressed
   if (db.rose()) {
+    buttonHeld = 0;
     clearPassword();
   }
 
