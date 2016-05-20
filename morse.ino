@@ -12,8 +12,9 @@
 #define PASSWORD "EE"
 //#define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
 #define LCD_SLEEP 10000 
-#define LCD_CHAR_LIMIT 15
+#define LCD_CHAR_LIMIT 10
 #define RESET_TIME 20000 // how long to hold button before a reset
+#define DISPLAY "CODE:"
 #define RELAY_ON 0
 #define RELAY_OFF 1
 
@@ -76,12 +77,16 @@ void setup()
     
   // setup the lcd
   lcd.init();
+  lcd.setCursor(0, 1);
+  lcd.print(DISPLAY); 
 }
 
 void clearPassword() {
   cursorPos = 0;
-  lcd.clear();
-  lcd.setCursor(0, 0);
+  lcd.setCursor(0, 1);
+  lcd.print("                ");
+  lcd.setCursor(0, 1);
+  lcd.print(DISPLAY);
   memset(password, 0, sizeof(password));
 }
 
@@ -161,7 +166,7 @@ void loop()
       // limit the total displayed to lcd
       if (cursorPos > LCD_CHAR_LIMIT) {
           cursorPos = LCD_CHAR_LIMIT;
-          lcd.setCursor(LCD_CHAR_LIMIT, 0);
+          lcd.setCursor(strlen(DISPLAY) + LCD_CHAR_LIMIT, 1);
       } 
     }
   }
