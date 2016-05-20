@@ -55,14 +55,6 @@ void successSound() {
   beep(PIN_SPEAKER,1500,200);
 }
 
-void winner() {
-  Serial.println("");
-  Serial.println("WINNER!!");
-  successSound();
-  enabled = false;
-  magnetOn = false;
-}
-
 void setup()
 {
   Serial.begin(9600);
@@ -99,6 +91,22 @@ void clearPassword() {
   memset(password, 0, sizeof(password));
 }
 
+void winner() {
+  Serial.println("");
+  Serial.println("WINNER!!");
+
+  clearFeedback();
+  clearPassword();
+  lcd.setCursor(0, 0);
+  lcd.print("DRAWER UNLOCKED!");
+  lcd.noCursor();
+  
+  successSound();
+  enabled = false;
+  magnetOn = false;
+}
+
+
 void reset() {
   clearFeedback();
   clearPassword();
@@ -107,8 +115,12 @@ void reset() {
 }
 
 void timeout() {
-  clearFeedback();
-  clearPassword();
+  if (enabled) {
+    clearFeedback();
+    clearPassword();
+  }else {
+    lcd.clear();
+  }
   lcd.noBacklight();
   lcd.noCursor();
 }
