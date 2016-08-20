@@ -169,17 +169,18 @@ void loop()
     lcd.print(morseChar);
     dotDashCount++;
     lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);    
+
+    // turn on backlight in case its off
+    lcdTimeOn = millis();
+    lcd.backlight();
+    lcd.cursor();
+
   } else if (morseChar != '\0') {
     clearFeedback();
     lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);
     
     // print character to console
     Serial.print(morseChar);
-
-    // turn on backlight in case its off
-    lcdTimeOn = millis();
-    lcd.backlight();
-    lcd.cursor();
 
     // print character to lcd
     lcd.print(morseChar);
