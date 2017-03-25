@@ -10,10 +10,13 @@
 
 // CONST
 #define PASSWORD "POLO"
+#define PASSWORD_TYPO "POLLO"
+#define ALMOST "MARCO"
+#define ALMOST_TYPO "MARKO"
 #define LCD_SLEEP 300000 // when to sleep lcd (5minutes)
 //#define LCD_SLEEP 10000 
 #define LCD_CHAR_LIMIT 10
-#define RESET_TIME 20000 // how long to hold button before a reset
+#define RESET_TIME 10000 // how long to hold button before a reset
 #define DISPLAY "CODE:"
 #define FEEDBACK_LINE 1 // what line is feedback on
 #define DISPLAY_LINE 0  // what line is display on
@@ -28,11 +31,12 @@ char password[LCD_CHAR_LIMIT + 2] = "";
 bool enabled = true;
 bool magnetOn = true;
 int dotDashCount = 0;
+bool almost = false;
 
 // Global objects
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
 LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
-Bounce db = Bounce(PIN_CLEAR, 20); 
+Bounce db = Bounce(PIN_CLEAR, 20);
 
 void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMilliseconds)     // the sound producing function  
 {
@@ -106,12 +110,28 @@ void winner() {
   magnetOn = false;
 }
 
+void almostAWinner() {
+  beep(PIN_SPEAKER,415,100);
+  delay(80);
+  beep(PIN_SPEAKER,279,100);
+  delay(80);
+  
+  clearFeedback();
+  clearPassword();
+  lcd.setCursor(0, 0);
+  lcd.print("    Almost!     ");
+  lcd.setCursor(0, 1);
+  lcd.print("Try the response");
+  lcd.noCursor();
+  almost = true;
+}
 
 void reset() {
   clearFeedback();
   clearPassword();
   enabled = true;
   magnetOn = true;
+  almost=false;
 }
 
 void timeout() {
@@ -157,13 +177,17 @@ void loop()
   // handle clear button pressed
   if (db.rose()) {
     buttonHeld = 0;
-    clearPassword();
+    reset();
   }
 
   // handle morse code key entered
   char morseChar = ml.getChar(); 
 
-  if (morseChar == '.' || morseChar == '-') {
+  // if they almost got it but then used the handle, reset it all
+  if (almost==true && (morseChar == '.' || morseChar == '-')) {
+    reset();
+  }
+  else if (morseChar == '.' || morseChar == '-') {
     // print to lcd dots and dashes to help users determine what they were doing
     lcd.setCursor(dotDashCount, FEEDBACK_LINE);
     lcd.print(morseChar);
@@ -189,10 +213,12 @@ void loop()
     password[cursorPos] = morseChar;
 
     // check for win condition
-    if (String(password) == PASSWORD) {
+    if (String(password) == PASSWORD || String(password) == PASSWORD_TYPO) {
       winner();
     }
-    else {
+    else if (String(password) == ALMOST || String(password) == ALMOST_TYPO) {
+      almostAWinner();
+    } else {
       // update cursor position
       cursorPos++;
   
