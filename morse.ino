@@ -131,18 +131,41 @@ void reset() {
   clearPassword();
   enabled = true;
   magnetOn = true;
-  almost=false;
+  almost = false;
 }
 
 void timeout() {
   if (enabled) {
     clearFeedback();
     clearPassword();
-  }else {
+  } else {
     lcd.clear();
   }
   lcd.noBacklight();
   lcd.noCursor();
+}
+
+void eraseALetter() {
+  clearFeedback();
+
+  if (almost==true || cursorPos >= LCD_CHAR_LIMIT) {
+    reset();
+  }
+  else {
+    cursorPos--;
+
+    // dont allow cursor to move back past initial display
+    if (cursorPos < 0) {
+      cursorPos = 0;
+    }
+
+    // clear the stored password and set the cursor to clear single character
+    password[cursorPos] = '\0';
+
+    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);
+    lcd.print(' ');
+    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);
+  }
 }
 
 void loop()
@@ -177,7 +200,7 @@ void loop()
   // handle clear button pressed
   if (db.rose()) {
     buttonHeld = 0;
-    reset();
+    eraseALetter();
   }
 
   // handle morse code key entered

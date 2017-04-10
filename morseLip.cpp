@@ -2,7 +2,7 @@
 #include <Bounce2.h>
 
 // global defines
-#define DASH_TIME 120
+#define DASH_TIME 140
 #define WAIT_THRESHOLD 1000
 
 // Debounce stuff
