@@ -1,6 +1,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Bounce2.h>
 #include "MorseLib.h"
+#include <SoftwareSerial.h>
 
 // PIN setup
 #define PIN_MORSE   2 // The Morse keyer button
@@ -17,7 +18,7 @@
 //#define LCD_SLEEP 10000 
 #define LCD_CHAR_LIMIT 10
 #define RESET_TIME 10000 // how long to hold button before a reset
-#define DISPLAY "CODE:"
+#define DISPLAY_PREFIX "CODE:"
 #define FEEDBACK_LINE 1 // what line is feedback on
 #define DISPLAY_LINE 0  // what line is display on
 #define RELAY_ON 0
@@ -31,12 +32,14 @@ char password[LCD_CHAR_LIMIT + 2] = "";
 bool enabled = true;
 bool magnetOn = true;
 int dotDashCount = 0;
-bool almost = false;
+bool almostModeOn = false;
+bool clueModeOn = false;
 
 // Global objects
 MorseLib ml(PIN_MORSE, PIN_SPEAKER, true);
 LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
 Bounce db = Bounce(PIN_CLEAR, 20);
+SoftwareSerial bluetooth(10, 9); // RX, TX  
 
 void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMilliseconds)     // the sound producing function  
 {
@@ -52,6 +55,12 @@ void beep(unsigned char speakerPin, int frequencyInHertz, long timeInMillisecond
   }
 }
 
+void shortBeep(int howLong) {
+  digitalWrite(PIN_SPEAKER,HIGH); 
+  delay(howLong);
+  digitalWrite(PIN_SPEAKER,LOW);  
+}
+
 void successSound() {
   beep(PIN_SPEAKER,1200,100);
   delay(80);
@@ -59,10 +68,38 @@ void successSound() {
   beep(PIN_SPEAKER,1500,200);
 }
 
+void clueSound() {
+  shortBeep(200);
+  delay(50);
+  shortBeep(100);
+  delay(35);
+  shortBeep(100);
+  delay(35);
+  shortBeep(200);
+  delay(50);
+  shortBeep(200);
+  delay(50);
+  shortBeep(100);
+  delay(35);
+  shortBeep(100);
+  delay(35);
+  shortBeep(200);    
+}
+
+void feedbackSound() {
+  beep(PIN_SPEAKER,415,100);
+  delay(80);
+  beep(PIN_SPEAKER,279,100);
+  delay(80);
+}
+
 void setup()
 {
   Serial.begin(9600);
   Serial.println("Morse decoder by kevinc");
+
+  // setup bluetooth serial connection
+  bluetooth.begin(9600);
 
   // setup morse button
   ml.setup();
@@ -77,7 +114,7 @@ void setup()
   // setup the lcd
   lcd.init();
   lcd.setCursor(0, DISPLAY_LINE);
-  lcd.print(DISPLAY); 
+  lcd.print(DISPLAY_PREFIX); 
 }
 
 void clearFeedback() {
@@ -91,7 +128,7 @@ void clearPassword() {
   lcd.setCursor(0, DISPLAY_LINE);
   lcd.print("                ");
   lcd.setCursor(0, DISPLAY_LINE);
-  lcd.print(DISPLAY);
+  lcd.print(DISPLAY_PREFIX);
   memset(password, 0, sizeof(password));
 }
 
@@ -99,8 +136,7 @@ void winner() {
   Serial.println("");
   Serial.println("WINNER!!");
 
-  clearFeedback();
-  clearPassword();
+  resetScreen();
   lcd.setCursor(0, 0);
   lcd.print("DRAWER UNLOCKED!");
   lcd.noCursor();
@@ -116,28 +152,31 @@ void almostAWinner() {
   beep(PIN_SPEAKER,279,100);
   delay(80);
   
-  clearFeedback();
-  clearPassword();
+  resetScreen();
   lcd.setCursor(0, 0);
   lcd.print("    Almost!     ");
   lcd.setCursor(0, 1);
   lcd.print("Try the response");
   lcd.noCursor();
-  almost = true;
+  almostModeOn = true;
+}
+
+void resetScreen() {
+  clearFeedback();
+  clearPassword();
 }
 
 void reset() {
-  clearFeedback();
-  clearPassword();
+  resetScreen();
   enabled = true;
   magnetOn = true;
-  almost = false;
+  almostModeOn = false;
+  clueModeOn = false;
 }
 
 void timeout() {
   if (enabled) {
-    clearFeedback();
-    clearPassword();
+    resetScreen();
   } else {
     lcd.clear();
   }
@@ -148,7 +187,7 @@ void timeout() {
 void eraseALetter() {
   clearFeedback();
 
-  if (almost==true || cursorPos >= LCD_CHAR_LIMIT) {
+  if (almostModeOn==true || cursorPos >= LCD_CHAR_LIMIT) {
     reset();
   }
   else {
@@ -162,9 +201,77 @@ void eraseALetter() {
     // clear the stored password and set the cursor to clear single character
     password[cursorPos] = '\0';
 
-    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);
+    lcd.setCursor(strlen(DISPLAY_PREFIX) + cursorPos, DISPLAY_LINE);
     lcd.print(' ');
-    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);
+    lcd.setCursor(strlen(DISPLAY_PREFIX) + cursorPos, DISPLAY_LINE);
+  }
+}
+
+void readAnyBluetoothMessage() {
+  if (bluetooth.available()) {
+    String str = bluetooth.readStringUntil('\n');
+    Serial.print("got in: ");
+    Serial.println(str);
+
+    // ignore connection messages
+    if (str.length() < 3) {
+      return;
+    }
+    
+    clueModeOn = true;
+
+    String line1;
+    String line2;
+    
+    resetScreen();
+    lcdTimeOn = millis();
+    lcd.backlight();
+
+    lcd.setCursor(0, 0);
+
+    bool feedback = str.startsWith("@");     // starts with @ means its a feedback one, not a clue, change sound
+    if (feedback) {
+      str = str.substring(1);
+    }
+    int newLineCharIndex = str.indexOf('#'); // # means newline since I only send 1 thing at a time from app
+
+    if (newLineCharIndex > 0) {
+      line1 = str.substring(0, newLineCharIndex);
+      line2 = str.substring(newLineCharIndex + 1);  
+    }
+    else {
+      line1 = str;
+    }
+
+    // pad string if needed
+    int l1Length = line1.length();
+    if (line1.length() < 16) {
+      for(int i=line1.length(); i<16; i++) {
+        line1 += " ";
+      }
+    }
+    if (line2.length() < 16) {
+      for(int i=line2.length(); i<16; i++) {
+        line2 += " ";
+      }
+    }
+
+    Serial.println("Setting clue to: ");
+    Serial.println(line1);
+    Serial.println(line2);
+
+    // set lcd on screen
+    lcd.print(line1);
+    lcd.setCursor(0, 1);
+    lcd.print(line2);
+    lcd.noCursor();
+
+    // make sound
+    if (feedback) {
+      feedbackSound();
+    } else {
+      clueSound();
+    }
   }
 }
 
@@ -172,6 +279,9 @@ void loop()
 {
   // write out to the relay
   digitalWrite(PIN_RELAY, magnetOn ? RELAY_ON : RELAY_OFF);
+
+  // read bluetooth ble connection
+  readAnyBluetoothMessage();
   
   // handle timeout on lcd
   if (millis() - lcdTimeOn > LCD_SLEEP) {
@@ -186,28 +296,43 @@ void loop()
     buttonHeld = millis();
   }
 
+  // reset the length of the button press when its unpressed
+  if (db.rose()) {
+    buttonHeld = 0;
+  }
+
   // if we've been holding the button down long enough, reset the whole thing
   if (db.read() == 0 && buttonHeld > 0 && millis() - buttonHeld > RESET_TIME) {
     Serial.println("Resetting machine.");
     buttonHeld = 0;
     reset();
   }
+
   // don't do work if we won and not a reset button
   if (!enabled) {
     return;
   }
 
+  // if a clue has come in and then they pressed reset, then we should fully reset it all
+  if (clueModeOn && db.rose()) {
+    Serial.println("Clue mode is enabled, and button pressed.  Resetting display.");
+    resetScreen();
+    clueModeOn = false;
+    ml.reset();
+    delay(100);
+    return;
+  }
+
   // handle clear button pressed
   if (db.rose()) {
-    buttonHeld = 0;
     eraseALetter();
   }
 
   // handle morse code key entered
   char morseChar = ml.getChar(); 
-
+  
   // if they almost got it but then used the handle, reset it all
-  if (almost==true && (morseChar == '.' || morseChar == '-')) {
+  if (almostModeOn==true && (morseChar == '.' || morseChar == '-')) {
     reset();
   }
   else if (morseChar == '.' || morseChar == '-') {
@@ -215,7 +340,7 @@ void loop()
     lcd.setCursor(dotDashCount, FEEDBACK_LINE);
     lcd.print(morseChar);
     dotDashCount++;
-    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);    
+    lcd.setCursor(strlen(DISPLAY_PREFIX) + cursorPos, DISPLAY_LINE);    
 
     // turn on backlight in case its off
     lcdTimeOn = millis();
@@ -224,7 +349,7 @@ void loop()
 
   } else if (morseChar != '\0') {
     clearFeedback();
-    lcd.setCursor(strlen(DISPLAY) + cursorPos, DISPLAY_LINE);
+    lcd.setCursor(strlen(DISPLAY_PREFIX) + cursorPos, DISPLAY_LINE);
     
     // print character to console
     Serial.print(morseChar);
@@ -248,9 +373,8 @@ void loop()
       // limit the total displayed to lcd
       if (cursorPos > LCD_CHAR_LIMIT) {
           cursorPos = LCD_CHAR_LIMIT;
-          lcd.setCursor(strlen(DISPLAY) + LCD_CHAR_LIMIT, DISPLAY_LINE);
+          lcd.setCursor(strlen(DISPLAY_PREFIX) + LCD_CHAR_LIMIT, DISPLAY_LINE);
       } 
     }
   }
 }
-

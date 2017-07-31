@@ -34,6 +34,16 @@ void MorseLib::setup()
   debouncer.interval(20);
 }
 
+void MorseLib::reset()
+{
+  debouncer.update();
+  _markTime = 0;
+  _waitTime = 0;
+  _pressed = false;
+  morseTableJumper = (morseTreetop + 1) / 2;
+  morseTablePointer = morseTreetop;
+}
+
 char MorseLib::getChar()
 {
   // empty char

@@ -8,6 +8,7 @@ class MorseLib
 public: 
   MorseLib(uint8_t pinIn, uint8_t speakerPin, bool echo);
   void setup();
+  void reset();
   char getChar();
 
 private:  
