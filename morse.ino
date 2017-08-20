@@ -323,6 +323,11 @@ void loop()
     return;
   }
 
+  // if clue mode is still on, then don't allow anything until they reset it
+  if (clueModeOn) {
+    return;
+  }
+
   // handle clear button pressed
   if (db.rose()) {
     eraseALetter();
